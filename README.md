@@ -1,4 +1,4 @@
-# 📚 Papelaria SGC — Sistema de Gestão Comercial
+#  Papelaria SGC — Sistema de Gestão Comercial
 
 Sistema de gestão comercial para a **Papelaria Mundo Letrado**, desenvolvido como projeto da disciplina **Desenvolvimento Web**.
 
@@ -6,7 +6,7 @@ Sistema de gestão comercial para a **Papelaria Mundo Letrado**, desenvolvido co
 
 ---
 
-## 🎯 Sobre o projeto
+##  Sobre o projeto
 
 A Papelaria Mundo Letrado é um pequeno comércio de bairro especializado em material escolar e de escritório. O SGC automatiza:
 
@@ -15,7 +15,7 @@ A Papelaria Mundo Letrado é um pequeno comércio de bairro especializado em mat
 - Geração de relatórios gerenciais (com gráfico anual)
 - Controle de acesso por perfis (Administrador / Funcionário)
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 Arquitetura em camadas (View → Service → Repository → Model) com separação backend (API REST) / frontend (Django Templates):
 
@@ -112,7 +112,7 @@ pytest tests/ -v
 
 Resultado esperado: **40 testes passando**.
 
-## 📁 Estrutura do projeto
+##  Estrutura do projeto
 
 ```
 papelaria-sgc/
@@ -168,7 +168,7 @@ papelaria-sgc/
     └── test_vendas.py
 ```
 
-## 🔌 API REST
+##  API REST
 
 Todas as rotas exigem `Authorization: Bearer <access_token>` exceto `/api/auth/login/`.
 
@@ -208,7 +208,7 @@ Todas as rotas exigem `Authorization: Bearer <access_token>` exceto `/api/auth/l
 - `GET  /api/relatorios/anual/?ano=YYYY`
 - `GET  /api/relatorios/top-produtos/?limite=N`
 
-## 🔐 Segurança
+##  Segurança
 
 - Senhas armazenadas com **PBKDF2-SHA256** (default Django)
 - **JWT** com expiração de 60 min (access) e 7 dias (refresh)
@@ -217,17 +217,7 @@ Todas as rotas exigem `Authorization: Bearer <access_token>` exceto `/api/auth/l
 - Validação de CPF com dígito verificador
 - Constraints no banco (CHECK em preço, estoque, status)
 
-## 📊 Identidade visual
-
-| | |
-|---|---|
-| Cor primária | `#1F3A5F` (azul-marinho) |
-| Cor de destaque | `#D4A017` (amarelo-mostarda) |
-| Tipografia | Sistema (Helvetica / Roboto) |
-| Componentes | Bootstrap 5 + Bootstrap Icons |
-| Gráficos | Chart.js |
-
-## 🧪 Cobertura de testes
+##  Cobertura de testes
 
 | Módulo | Quantidade |
 |---|---|
@@ -237,21 +227,7 @@ Todas as rotas exigem `Authorization: Bearer <access_token>` exceto `/api/auth/l
 | Vendas | 11 |
 | **Total** | **40 testes** |
 
-## 📝 Status das entregas
-
-- [x] **Entrega 1** — Modelagem e arquitetura *(03/04)*
-- [x] **Entrega 2** — Backend funcional *(08/05)*
-- [ ] **Entrega 3** — Sistema completo *(26/06)*
-  - [ ] Recuperação de senha por e-mail (SMTP)
-  - [ ] Polimento de UI
-
-## 👥 Equipe
+##  Equipe
 
 - **Pedro Henrique Bastos Guimarães** — 22303912
 - **Raphael Damião Seabra Rosano** — 22303595
-
-Disciplina: **Desenvolvimento Web**
-
-## 📄 Licença
-
-Projeto acadêmico — uso educacional.
