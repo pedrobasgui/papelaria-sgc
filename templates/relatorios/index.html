@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 style="color: var(--primary);">
+        <i class="bi bi-bar-chart"></i> Relatórios
+    </h2>
+    <small class="text-muted">Análises gerenciais</small>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab"
+                data-bs-target="#tab-periodo">
+            <i class="bi bi-calendar-range"></i> Por período
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab"
+                data-bs-target="#tab-cliente">
+            <i class="bi bi-person"></i> Por cliente
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab"
+                data-bs-target="#tab-anual">
+            <i class="bi bi-graph-up"></i> Anual
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- =================== POR PERÍODO =================== -->
+    <div class="tab-pane fade show active" id="tab-periodo">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small">Data inicial</label>
+                        <input type="date" class="form-control" id="p-ini">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Data final</label>
+                        <input type="date" class="form-control" id="p-fim">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-papelaria w-100" onclick="gerarPeriodo()">
+                            <i class="bi bi-search"></i> Gerar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="resultado-periodo"></div>
+    </div>
+
+    <!-- =================== POR CLIENTE =================== -->
+    <div class="tab-pane fade" id="tab-cliente">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-9">
+                        <label class="form-label small">Cliente</label>
+                        <select class="form-select" id="c-id">
+                            <option value="">-- Selecione --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-papelaria w-100" onclick="gerarCliente()">
+                            <i class="bi bi-search"></i> Gerar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="resultado-cliente"></div>
+    </div>
+
+    <!-- =================== ANUAL =================== -->
+    <div class="tab-pane fade" id="tab-anual">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-9">
+                        <label class="form-label small">Ano</label>
+                        <select class="form-select" id="a-ano"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-papelaria w-100" onclick="gerarAnual()">
+                            <i class="bi bi-search"></i> Gerar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="resultado-anual"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let chartAnual = null;
+
+// ---------- Por período ----------
+async function gerarPeriodo() {
+    const di = document.getElementById('p-ini').value;
+    const df = document.getElementById('p-fim').value;
+    if (!di || !df) { toast('Selecione as duas datas.', 'warning'); return; }
+    try {
+        const r = await API.relatorios.porPeriodo(di, df);
+        document.getElementById('resultado-periodo').innerHTML = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-3"><div class="kpi-card">
+                    <div class="label">Vendas</div>
+                    <div class="value">${r.quantidade_vendas}</div>
+                </div></div>
+                <div class="col-md-3"><div class="kpi-card gold">
+                    <div class="label">Faturamento</div>
+                    <div class="value">${formatarBRL(r.valor_total)}</div>
+                </div></div>
+                <div class="col-md-3"><div class="kpi-card success">
+                    <div class="label">Ticket médio</div>
+                    <div class="value">${formatarBRL(r.ticket_medio)}</div>
+                </div></div>
+            </div>
+            <div class="card"><div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr>
+                        <th>#</th><th>Data</th><th>Cliente</th>
+                        <th>Vendedor</th><th class="text-end">Total</th>
+                    </tr></thead>
+                    <tbody>${r.vendas.map(v => `<tr>
+                        <td><a href="/vendas/${v.id}/">#${v.id}</a></td>
+                        <td>${formatarData(v.data)}</td>
+                        <td>${v.cliente}</td>
+                        <td>${v.vendedor}</td>
+                        <td class="text-end"><strong>${formatarBRL(v.valor_total)}</strong></td>
+                    </tr>`).join('')}</tbody>
+                </table>
+            </div></div>`;
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+// ---------- Por cliente ----------
+async function carregarClientes() {
+    try {
+        const data = await API.clientes.listar();
+        const lst = data.results || data;
+        const sel = document.getElementById('c-id');
+        lst.forEach(c => sel.add(new Option(`${c.nome} (${c.cpf})`, c.id)));
+    } catch {}
+}
+
+async function gerarCliente() {
+    const id = document.getElementById('c-id').value;
+    if (!id) { toast('Selecione um cliente.', 'warning'); return; }
+    try {
+        const r = await API.relatorios.porCliente(id);
+        document.getElementById('resultado-cliente').innerHTML = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="kpi-card">
+                    <div class="label">Vendas realizadas</div>
+                    <div class="value">${r.quantidade_vendas}</div>
+                </div></div>
+                <div class="col-md-4"><div class="kpi-card gold">
+                    <div class="label">Total comprado</div>
+                    <div class="value">${formatarBRL(r.valor_total)}</div>
+                </div></div>
+            </div>
+            <div class="card"><div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr>
+                        <th>#</th><th>Data</th>
+                        <th class="text-end">Itens</th>
+                        <th class="text-end">Total</th>
+                    </tr></thead>
+                    <tbody>${r.vendas.map(v => `<tr>
+                        <td><a href="/vendas/${v.id}/">#${v.id}</a></td>
+                        <td>${formatarData(v.data)}</td>
+                        <td class="text-end">${v.qtd_itens}</td>
+                        <td class="text-end"><strong>${formatarBRL(v.valor_total)}</strong></td>
+                    </tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Sem vendas para este cliente.</td></tr>'}</tbody>
+                </table>
+            </div></div>`;
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+// ---------- Anual ----------
+function popularAnos() {
+    const sel = document.getElementById('a-ano');
+    const atual = new Date().getFullYear();
+    for (let a = atual; a >= atual - 4; a--) sel.add(new Option(a, a));
+}
+
+async function gerarAnual() {
+    const ano = document.getElementById('a-ano').value;
+    try {
+        const r = await API.relatorios.anual(ano);
+        document.getElementById('resultado-anual').innerHTML = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="kpi-card">
+                    <div class="label">Vendas do ano</div>
+                    <div class="value">${r.total_qtd_vendas}</div>
+                </div></div>
+                <div class="col-md-4"><div class="kpi-card gold">
+                    <div class="label">Faturamento total</div>
+                    <div class="value">${formatarBRL(r.total_ano)}</div>
+                </div></div>
+            </div>
+            <div class="card"><div class="card-body">
+                <canvas id="chart-anual" height="80"></canvas>
+            </div></div>`;
+        const ctx = document.getElementById('chart-anual');
+        if (chartAnual) chartAnual.destroy();
+        chartAnual = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: r.labels,
+                datasets: [{
+                    label: 'Faturamento',
+                    data: r.valores,
+                    backgroundColor: '#1F3A5F',
+                    borderColor: '#D4A017',
+                    borderWidth: 2,
+                }, {
+                    type: 'line',
+                    label: 'Qtd vendas',
+                    data: r.quantidades,
+                    borderColor: '#D4A017',
+                    backgroundColor: 'rgba(212,160,23,0.2)',
+                    yAxisID: 'y1',
+                }]
+            },
+            options: {
+                scales: {
+                    y:  { beginAtZero: true, position: 'left',
+                          ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } },
+                    y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+popularAnos();
+carregarClientes();
+</script>
+{% endblock %}
+

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Vendas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0" style="color: var(--primary);">
+            <i class="bi bi-cart-check"></i> Vendas
+        </h2>
+        <small class="text-muted">Histórico de vendas registradas</small>
+    </div>
+    <a href="/vendas/nova/" class="btn btn-papelaria">
+        <i class="bi bi-plus-circle"></i> Nova venda
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small">Data inicial</label>
+                <input type="date" class="form-control form-control-sm" id="data-ini">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Data final</label>
+                <input type="date" class="form-control form-control-sm" id="data-fim">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Status</label>
+                <select class="form-select form-select-sm" id="status">
+                    <option value="">Todos</option>
+                    <option value="CONCLUIDA">Concluídas</option>
+                    <option value="CANCELADA">Canceladas</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-papelaria btn-sm w-100" onclick="carregar()">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-vendas">
+                <tr><td colspan="7" class="text-center text-muted py-4">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function carregar() {
+    const tbody = document.getElementById('tbody-vendas');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Carregando...</td></tr>';
+    const filtros = {};
+    const di = document.getElementById('data-ini').value;
+    const df = document.getElementById('data-fim').value;
+    const st = document.getElementById('status').value;
+    if (di) filtros.data_inicio = di + 'T00:00:00';
+    if (df) filtros.data_fim    = df + 'T23:59:59';
+    if (st) filtros.status      = st;
+
+    try {
+        const data = await API.vendas.listar(filtros);
+        const lista = data.results || data;
+        if (!lista.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma venda encontrada.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = lista.map(v => `
+            <tr>
+                <td><strong>#${v.id}</strong></td>
+                <td>${formatarData(v.data)}</td>
+                <td>${v.cliente.nome}</td>
+                <td><small>${v.usuario.username}</small></td>
+                <td class="text-end"><strong>${formatarBRL(v.valor_total)}</strong></td>
+                <td class="text-center">
+                    <span class="badge ${v.status === 'CONCLUIDA' ? 'badge-status-concluida' : 'badge-status-cancelada'}">
+                        ${v.status}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <a href="/vendas/${v.id}/" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    ${v.status === 'CONCLUIDA' ? `
+                    <button class="btn btn-sm btn-outline-danger"
+                            onclick="cancelar(${v.id})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${e.message}</td></tr>`;
+    }
+}
+
+async function cancelar(id) {
+    if (!confirma(`Cancelar a venda #${id}? O estoque será devolvido.`)) return;
+    try {
+        await API.vendas.cancelar(id);
+        toast('Venda cancelada e estoque restaurado.', 'success');
+        carregar();
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+carregar();
+</script>
+{% endblock %}
+

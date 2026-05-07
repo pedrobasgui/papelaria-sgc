@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}Nova venda{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 style="color: var(--primary);">
+        <i class="bi bi-cart-plus"></i> Nova Venda
+    </h2>
+    <a href="/vendas/" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row g-3">
+    <!-- Coluna esquerda: cliente e produtos -->
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-person"></i> Cliente
+            </div>
+            <div class="card-body">
+                <select class="form-select" id="cliente-id" required>
+                    <option value="">-- Selecione --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-box"></i> Adicionar produto</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <select class="form-select" id="produto-id">
+                            <option value="">-- Selecione um produto --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" class="form-control"
+                               id="qtd" min="1" value="1" placeholder="Qtd">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-accent w-100" onclick="adicionarItem()">
+                            <i class="bi bi-plus"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+                <small class="text-muted" id="info-produto"></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna direita: resumo -->
+    <div class="col-lg-5">
+        <div class="card sticky-top" style="top: 90px;">
+            <div class="card-header">
+                <i class="bi bi-receipt"></i> Resumo da venda
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0 tabela-itens">
+                    <thead>
+                        <tr><th>Produto</th><th>Qtd</th><th>Subt.</th><th></th></tr>
+                    </thead>
+                    <tbody id="tbody-itens">
+                        <tr><td colspan="4" class="text-center text-muted py-3">Nenhum item</td></tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: var(--accent-light);">
+                            <td colspan="2"><strong>TOTAL</strong></td>
+                            <td colspan="2" class="text-end">
+                                <strong style="color: var(--primary); font-size: 1.3rem;"
+                                        id="total">R$ 0,00</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="card-body">
+                <textarea class="form-control mb-3" rows="2" id="observacao"
+                          placeholder="Observação (opcional)"></textarea>
+                <button class="btn btn-papelaria w-100 py-2" onclick="finalizar()"
+                        id="btn-finalizar">
+                    <i class="bi bi-check-circle"></i> Finalizar venda
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const itens = []; // [{ produto, quantidade, preco_unitario }]
+let produtosCache = [];
+
+async function carregarComboBoxes() {
+    try {
+        const [clientesRes, produtosRes] = await Promise.all([
+            API.clientes.listar(),
+            API.produtos.listar(),
+        ]);
+        const clientes = clientesRes.results || clientesRes;
+        const produtos = produtosRes.results || produtosRes;
+        produtosCache = produtos.filter(p => p.ativo);
+
+        const selC = document.getElementById('cliente-id');
+        clientes.forEach(c => selC.add(new Option(`${c.nome} (${c.cpf})`, c.id)));
+
+        const selP = document.getElementById('produto-id');
+        produtosCache.forEach(p => selP.add(
+            new Option(`${p.nome} - ${formatarBRL(p.preco)} (${p.estoque} em estoque)`, p.id)
+        ));
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+document.getElementById('produto-id').addEventListener('change', e => {
+    const p = produtosCache.find(x => x.id == e.target.value);
+    document.getElementById('info-produto').textContent =
+        p ? `Preço: ${formatarBRL(p.preco)} | Estoque: ${p.estoque}` : '';
+});
+
+function adicionarItem() {
+    const id = parseInt(document.getElementById('produto-id').value);
+    const qtd = parseInt(document.getElementById('qtd').value);
+    if (!id || qtd < 1) { toast('Selecione produto e quantidade.', 'warning'); return; }
+
+    const p = produtosCache.find(x => x.id === id);
+    if (!p) return;
+
+    // Soma se mesmo produto já estiver na lista
+    const existente = itens.find(i => i.produto.id === id);
+    const totalQtd = (existente?.quantidade || 0) + qtd;
+    if (totalQtd > p.estoque) {
+        toast(`Estoque insuficiente. Disponível: ${p.estoque}.`, 'danger');
+        return;
+    }
+
+    if (existente) existente.quantidade = totalQtd;
+    else itens.push({ produto: p, quantidade: qtd, preco_unitario: parseFloat(p.preco) });
+
+    renderItens();
+    document.getElementById('produto-id').value = '';
+    document.getElementById('qtd').value = 1;
+    document.getElementById('info-produto').textContent = '';
+}
+
+function removerItem(idx) {
+    itens.splice(idx, 1);
+    renderItens();
+}
+
+function renderItens() {
+    const tbody = document.getElementById('tbody-itens');
+    if (!itens.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Nenhum item</td></tr>';
+        document.getElementById('total').textContent = 'R$ 0,00';
+        return;
+    }
+    let total = 0;
+    tbody.innerHTML = itens.map((it, idx) => {
+        const sub = it.preco_unitario * it.quantidade;
+        total += sub;
+        return `<tr>
+            <td><small>${it.produto.nome}</small></td>
+            <td>${it.quantidade}</td>
+            <td>${formatarBRL(sub)}</td>
+            <td><button class="btn btn-sm btn-link text-danger p-0"
+                        onclick="removerItem(${idx})">
+                <i class="bi bi-x-circle"></i>
+            </button></td>
+        </tr>`;
+    }).join('');
+    document.getElementById('total').textContent = formatarBRL(total);
+}
+
+async function finalizar() {
+    const clienteId = parseInt(document.getElementById('cliente-id').value);
+    if (!clienteId) { toast('Selecione um cliente.', 'warning'); return; }
+    if (!itens.length) { toast('Adicione ao menos um item.', 'warning'); return; }
+
+    const dados = {
+        cliente_id: clienteId,
+        observacao: document.getElementById('observacao').value || null,
+        itens: itens.map(i => ({
+            produto_id: i.produto.id,
+            quantidade: i.quantidade,
+            preco_unitario: i.preco_unitario,
+        })),
+    };
+    const btn = document.getElementById('btn-finalizar');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+    try {
+        const venda = await API.vendas.criar(dados);
+        toast(`Venda #${venda.id} registrada com sucesso!`, 'success');
+        setTimeout(() => window.location.href = `/vendas/${venda.id}/`, 800);
+    } catch (e) {
+        toast(e.message, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Finalizar venda';
+    }
+}
+
+carregarComboBoxes();
+</script>
+{% endblock %}
+

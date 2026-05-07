@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}{% if cliente_id %}Editar{% else %}Novo{% endif %} Cliente{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 style="color: var(--primary);">
+        <i class="bi bi-person-plus"></i>
+        {% if cliente_id %}Editar Cliente #{{ cliente_id }}{% else %}Novo Cliente{% endif %}
+    </h2>
+    <a href="/clientes/" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form id="form-cliente">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nome" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">CPF <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="cpf"
+                           placeholder="000.000.000-00" maxlength="14" required>
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Telefone</label>
+                    <input type="text" class="form-control" id="telefone"
+                           placeholder="(00) 00000-0000">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Endereço</label>
+                    <input type="text" class="form-control" id="endereco">
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="d-flex justify-content-end gap-2">
+                <a href="/clientes/" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-papelaria">
+                    <i class="bi bi-check-circle"></i> Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const clienteId = {{ cliente_id|default:"null" }};
+
+async function carregar() {
+    if (!clienteId) return;
+    try {
+        const c = await API.clientes.obter(clienteId);
+        document.getElementById('nome').value     = c.nome;
+        document.getElementById('cpf').value      = c.cpf;
+        document.getElementById('email').value    = c.email || '';
+        document.getElementById('telefone').value = c.telefone || '';
+        document.getElementById('endereco').value = c.endereco || '';
+    } catch (e) { toast(e.message, 'danger'); }
+}
+
+// Máscara simples de CPF
+document.getElementById('cpf').addEventListener('input', e => {
+    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2}).*/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{1,3}).*/, '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/^(\d{3})(\d{1,3}).*/, '$1.$2');
+    e.target.value = v;
+});
+
+document.getElementById('form-cliente').addEventListener('submit', async e => {
+    e.preventDefault();
+    const dados = {
+        nome:     document.getElementById('nome').value.trim(),
+        cpf:      document.getElementById('cpf').value.trim(),
+        email:    document.getElementById('email').value.trim() || null,
+        telefone: document.getElementById('telefone').value.trim() || null,
+        endereco: document.getElementById('endereco').value.trim() || null,
+    };
+    try {
+        if (clienteId) {
+            await API.clientes.atualizar(clienteId, dados);
+            toast('Cliente atualizado!', 'success');
+        } else {
+            await API.clientes.criar(dados);
+            toast('Cliente cadastrado!', 'success');
+        }
+        setTimeout(() => window.location.href = '/clientes/', 800);
+    } catch (e) {
+        toast(e.message, 'danger');
+    }
+});
+
+carregar();
+</script>
+{% endblock %}
+

@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Papelaria Mundo Letrado{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0" style="color: var(--primary);">Dashboard</h2>
+        <small class="text-muted">Visão geral do sistema</small>
+    </div>
+    <div>
+        <select class="form-select form-select-sm" id="ano-grafico"></select>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="label">Clientes</div>
+            <div class="value" id="kpi-clientes">-</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card success">
+            <div class="label">Produtos ativos</div>
+            <div class="value" id="kpi-produtos">-</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card gold">
+            <div class="label">Vendas no ano</div>
+            <div class="value" id="kpi-vendas">-</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card warning">
+            <div class="label">Estoque baixo</div>
+            <div class="value" id="kpi-estoque-baixo">-</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart-line"></i>
+                Vendas por mês &mdash; <span id="ano-titulo"></span>
+            </div>
+            <div class="card-body">
+                <canvas id="grafico-vendas" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-trophy"></i>
+                Produtos mais vendidos
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0 table-sm">
+                    <thead><tr><th>Produto</th><th class="text-end">Qtd</th></tr></thead>
+                    <tbody id="tbody-top-produtos">
+                        <tr><td colspan="2" class="text-center text-muted py-3">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header text-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Alerta - Estoque Baixo
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0 table-sm">
+                    <thead><tr><th>Produto</th><th class="text-end">Estoque</th></tr></thead>
+                    <tbody id="tbody-estoque-baixo">
+                        <tr><td colspan="2" class="text-center text-muted py-3">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let chartVendas = null;
+
+async function carregarKPIs() {
+    try {
+        const [clientes, produtos, baixo] = await Promise.all([
+            API.clientes.listar(),
+            API.produtos.listar(),
+            API.produtos.estoqueBaixo(),
+        ]);
+        document.getElementById('kpi-clientes').textContent =
+            (clientes.results || clientes).length;
+        const lst = produtos.results || produtos;
+        document.getElementById('kpi-produtos').textContent =
+            lst.filter(p => p.ativo).length;
+        document.getElementById('kpi-estoque-baixo').textContent = baixo.length;
+
+        const tbody = document.getElementById('tbody-estoque-baixo');
+        if (baixo.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-3">Tudo em ordem 👌</td></tr>';
+        } else {
+            tbody.innerHTML = baixo.map(p =>
+                `<tr><td>${p.nome}</td><td class="text-end estoque-baixo">${p.estoque}</td></tr>`
+            ).join('');
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function carregarGrafico(ano) {
+    try {
+        const dados = await API.relatorios.anual(ano);
+        document.getElementById('ano-titulo').textContent = ano;
+        document.getElementById('kpi-vendas').textContent = dados.total_qtd_vendas;
+
+        const ctx = document.getElementById('grafico-vendas');
+        if (chartVendas) chartVendas.destroy();
+        chartVendas = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dados.labels,
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: dados.valores,
+                    backgroundColor: '#1F3A5F',
+                    borderColor: '#D4A017',
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            label: c => formatarBRL(c.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+                    }
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+}
+
+async function carregarTopProdutos() {
+    try {
+        const dados = await API.relatorios.topProdutos(5);
+        const tbody = document.getElementById('tbody-top-produtos');
+        if (!dados.produtos.length) {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted py-3">Sem vendas ainda.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = dados.produtos.map(p =>
+            `<tr><td>${p.nome}</td><td class="text-end">${p.qtd_vendida}</td></tr>`
+        ).join('');
+    } catch (e) { console.error(e); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Combo de anos (últimos 5)
+    const sel = document.getElementById('ano-grafico');
+    const atual = new Date().getFullYear();
+    for (let a = atual; a >= atual - 4; a--) {
+        sel.add(new Option(a, a));
+    }
+    sel.addEventListener('change', e => carregarGrafico(e.target.value));
+
+    carregarKPIs();
+    carregarGrafico(atual);
+    carregarTopProdutos();
+});
+</script>
+{% endblock %}
+

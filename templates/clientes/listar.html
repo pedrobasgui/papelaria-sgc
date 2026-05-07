@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Clientes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0" style="color: var(--primary);">
+            <i class="bi bi-people"></i> Clientes
+        </h2>
+        <small class="text-muted">Gestão de clientes da papelaria</small>
+    </div>
+    <a href="/clientes/novo/" class="btn btn-papelaria">
+        <i class="bi bi-plus-circle"></i> Novo cliente
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <input type="text" class="form-control" id="busca"
+               placeholder="🔍 Buscar por nome ou CPF...">
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-clientes">
+                <tr><td colspan="5" class="text-center text-muted py-4">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let timeoutBusca = null;
+
+async function carregar(busca='') {
+    const tbody = document.getElementById('tbody-clientes');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Carregando...</td></tr>';
+    try {
+        const data = await API.clientes.listar(busca);
+        const lista = data.results || data;
+        if (!lista.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhum cliente encontrado.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = lista.map(c => `
+            <tr>
+                <td><strong>${c.nome}</strong></td>
+                <td>${c.cpf}</td>
+                <td>${c.email || '-'}</td>
+                <td>${c.telefone || '-'}</td>
+                <td class="text-end">
+                    <a href="/clientes/${c.id}/editar/" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger"
+                            onclick="excluir(${c.id}, '${c.nome.replace(/'/g, "\\'")}')"
+                            ${c.possui_vendas ? 'disabled title="Cliente com vendas registradas"' : ''}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${e.message}</td></tr>`;
+    }
+}
+
+async function excluir(id, nome) {
+    if (!confirma(`Excluir o cliente "${nome}"?`)) return;
+    try {
+        await API.clientes.remover(id);
+        toast('Cliente excluído com sucesso.', 'success');
+        carregar(document.getElementById('busca').value);
+    } catch (e) {
+        toast(e.message, 'danger');
+    }
+}
+
+document.getElementById('busca').addEventListener('input', e => {
+    clearTimeout(timeoutBusca);
+    timeoutBusca = setTimeout(() => carregar(e.target.value), 300);
+});
+
+carregar();
+</script>
+{% endblock %}
+

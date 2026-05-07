@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Produtos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0" style="color: var(--primary);">
+            <i class="bi bi-box-seam"></i> Produtos
+        </h2>
+        <small class="text-muted">Catálogo da papelaria</small>
+    </div>
+    <a href="/produtos/novo/" class="btn btn-papelaria">
+        <i class="bi bi-plus-circle"></i> Novo produto
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <input type="text" class="form-control" id="busca"
+               placeholder="🔍 Buscar produto...">
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th class="text-end">Preço</th>
+                    <th class="text-end">Estoque</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-produtos">
+                <tr><td colspan="5" class="text-center text-muted py-4">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let timeoutBusca = null;
+
+async function carregar(busca='') {
+    const tbody = document.getElementById('tbody-produtos');
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Carregando...</td></tr>';
+    try {
+        const data = await API.produtos.listar(busca);
+        const lista = data.results || data;
+        if (!lista.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhum produto encontrado.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = lista.map(p => `
+            <tr ${!p.ativo ? 'class="text-muted"' : ''}>
+                <td>
+                    <strong>${p.nome}</strong><br>
+                    <small class="text-muted">${(p.descricao || '').substring(0,80)}</small>
+                </td>
+                <td class="text-end">${formatarBRL(p.preco)}</td>
+                <td class="text-end ${p.estoque_baixo ? 'estoque-baixo' : ''}">
+                    ${p.estoque}
+                    ${p.estoque_baixo ? '<i class="bi bi-exclamation-triangle"></i>' : ''}
+                </td>
+                <td class="text-center">
+                    ${p.ativo
+                        ? '<span class="badge bg-success">Ativo</span>'
+                        : '<span class="badge bg-secondary">Inativo</span>'}
+                </td>
+                <td class="text-end">
+                    <a href="/produtos/${p.id}/editar/" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger"
+                            onclick="excluir(${p.id}, '${p.nome.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${e.message}</td></tr>`;
+    }
+}
+
+async function excluir(id, nome) {
+    if (!confirma(`Remover o produto "${nome}"?`)) return;
+    try {
+        await API.produtos.remover(id);
+        toast('Produto removido (ou inativado se possuir vendas).', 'success');
+        carregar(document.getElementById('busca').value);
+    } catch (e) {
+        toast(e.message, 'danger');
+    }
+}
+
+document.getElementById('busca').addEventListener('input', e => {
+    clearTimeout(timeoutBusca);
+    timeoutBusca = setTimeout(() => carregar(e.target.value), 300);
+});
+
+carregar();
+</script>
+{% endblock %}
+
