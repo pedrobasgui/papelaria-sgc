@@ -1,6 +1,7 @@
 """Modelo de Usuario customizado com perfil de acesso."""
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from .reset_token import PasswordResetToken
 
 class Usuario(AbstractUser):
 

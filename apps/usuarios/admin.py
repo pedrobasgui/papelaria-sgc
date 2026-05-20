@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import Usuario
+from .reset_token import PasswordResetToken
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
@@ -14,3 +15,9 @@ class UsuarioAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Perfil do Sistema", {"fields": ("perfil", "email")}),
     )
+
+@admin.register(PasswordResetToken)
+class PasswordResetTokenAdmin(admin.ModelAdmin):
+    list_display = ("usuario", "criado_em", "expira_em", "usado")
+    list_filter = ("usado",)
+    readonly_fields = ("token_hash", "criado_em", "expira_em")
