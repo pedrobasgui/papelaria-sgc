@@ -44,37 +44,11 @@
             </button>
 
             <div class="text-center mt-3">
-                <a href="#" class="text-muted small"
-                   data-bs-toggle="modal" data-bs-target="#modal-recuperar">
+                <a href="/recuperar-senha/" class="text-muted small">
                     Esqueci minha senha
                 </a>
             </div>
         </form>
-    </div>
-</div>
-
-<!-- Modal Recuperar Senha -->
-<div class="modal fade" id="modal-recuperar">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Recuperar Senha</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted small">
-                    Informe o e-mail cadastrado. Você receberá instruções
-                    para redefinir sua senha. <em>(funcionalidade completa
-                    será implementada na Entrega 3)</em>
-                </p>
-                <input type="email" class="form-control"
-                       id="email-recuperar" placeholder="seu@email.com">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-papelaria" id="btn-enviar-recuperar">Enviar</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -100,22 +74,6 @@
         }
     });
 
-    document.getElementById('btn-enviar-recuperar').addEventListener('click', async () => {
-        const email = document.getElementById('email-recuperar').value;
-        if (!email) return;
-        try {
-            const res = await fetch('/api/auth/recuperar-senha/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email }),
-            });
-            const data = await res.json();
-            alert(data.mensagem || 'Solicitação registrada.');
-            bootstrap.Modal.getInstance(
-                document.getElementById('modal-recuperar')
-            ).hide();
-        } catch { alert('Erro ao solicitar recuperação.'); }
-    });
 </script>
 </body>
 </html>

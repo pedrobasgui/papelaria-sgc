@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha - Papelaria Mundo Letrado</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo">
+            <h1>Papelaria <span class="accent">Mundo Letrado</span></h1>
+            <small>Recuperação de senha</small>
+        </div>
+
+        <div id="step-email">
+            <p class="text-muted small text-center mb-3">
+                Informe seu e-mail cadastrado e enviaremos instruções.
+            </p>
+            <div class="mb-3">
+                <input type="email" class="form-control" id="email"
+                       placeholder="seu@email.com" required>
+            </div>
+            <div id="erro-email" class="alert alert-danger d-none"></div>
+            <button class="btn btn-papelaria w-100" onclick="solicitarRecuperacao()">
+                Enviar instruções
+            </button>
+            <div class="text-center mt-3">
+                <a href="/login/" class="text-muted small">Voltar para o login</a>
+            </div>
+        </div>
+
+        <div id="step-sucesso" class="d-none text-center">
+            <div class="alert alert-success">
+                Se o e-mail estiver cadastrado, você receberá as instruções em breve.
+            </div>
+            <a href="/login/" class="btn btn-papelaria w-100">Voltar para o login</a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/api.js' %}"></script>
+<script>
+async function solicitarRecuperacao() {
+    const email = document.getElementById('email').value;
+    const erroEl = document.getElementById('erro-email');
+    erroEl.classList.add('d-none');
+    if (!email) {
+        erroEl.textContent = 'Informe o e-mail.';
+        erroEl.classList.remove('d-none');
+        return;
+    }
+    try {
+        await fetch('/api/auth/recuperar-senha/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        document.getElementById('step-email').classList.add('d-none');
+        document.getElementById('step-sucesso').classList.remove('d-none');
+    } catch {
+        erroEl.textContent = 'Erro ao enviar. Tente novamente.';
+        erroEl.classList.remove('d-none');
+    }
+}
+</script>
+</body>
+</html>

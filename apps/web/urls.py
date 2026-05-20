@@ -26,4 +26,8 @@ urlpatterns = [
 
     # Relatórios
     path("relatorios/",       views.relatorios_index, name="web-relatorios"),
+    
+    # Recuperação Senha
+    path("recuperar-senha/",  views.recuperar_senha_view, name="web-recuperar-senha"),
+    path("recuperar-senha/confirmar/",  views.redefinir_senha_view, name="web-redefinir-senha"),
 ]

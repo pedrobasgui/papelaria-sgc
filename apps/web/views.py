@@ -42,3 +42,10 @@ def venda_detalhe(request, venda_id):
 # Relatórios
 def relatorios_index(request):
     return render(request, "relatorios/index.html")
+
+def recuperar_senha_view(request):
+    return render(request, "registration/recuperar_senha.html")
+
+
+def redefinir_senha_view(request):
+    return render(request, "registration/redefinir_senha.html")
