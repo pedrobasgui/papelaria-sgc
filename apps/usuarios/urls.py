@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     LoginView, LogoutView, MeView,
-    TrocarSenhaView, RecuperarSenhaView, UsuarioViewSet,
+    TrocarSenhaView, RecuperarSenhaView, RedefinirSenhaView, UsuarioViewSet,
 )
 
 router = DefaultRouter()
@@ -18,5 +18,6 @@ urlpatterns = [
     path("me/",               MeView.as_view(),       name="auth-me"),
     path("trocar-senha/",     TrocarSenhaView.as_view(),    name="auth-trocar-senha"),
     path("recuperar-senha/",  RecuperarSenhaView.as_view(), name="auth-recuperar"),
+    path("recuperar-senha/",  RecuperarSenhaView.as_view(), name="auth-redefinir"),
     path("",                  include(router.urls)),
 ]

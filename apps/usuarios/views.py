@@ -77,21 +77,64 @@ class TrocarSenhaView(APIView):
         return Response({"mensagem": "Senha alterada com sucesso."})
 
 class RecuperarSenhaView(APIView):
-    """
-    POST /api/auth/recuperar-senha/
-    Stub para Entrega 3: apenas valida e-mail por enquanto.
-    """
+    """POST /api/auth/recuperar-senha/ - solicita recuperacao por e-mail."""
     permission_classes = [AllowAny]
 
     def post(self, request):
+        from django.contrib.auth import get_user_model
+        from .reset_token import PasswordResetToken
+        from .email_service import enviar_email_recuperacao
+
         serializer = RecuperarSenhaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # TODO Entrega 3: gerar token, enviar e-mail
+        email = serializer.validated_data["email"]
+        User = get_user_model()
+        usuario = User.objects.filter(email=email, is_active=True).first()
+        if usuario:
+            token_raw, _ = PasswordResetToken.criar_para(usuario)
+            enviar_email_recuperacao(email, usuario.username, token_raw)
         return Response({
             "mensagem": "Se o e-mail estiver cadastrado, "
-                        "instruções de recuperação serão enviadas.",
-            "obs": "Funcionalidade completa será implementada na Entrega 3.",
+                        "você receberá as instruções em breve."
         })
+
+
+class RedefinirSenhaView(APIView):
+    """POST /api/auth/redefinir-senha/ - confirma token e salva nova senha."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        from .reset_token import PasswordResetToken
+        token_raw = request.data.get("token", "")
+        nova_senha = request.data.get("nova_senha", "")
+        if not token_raw or not nova_senha:
+            return Response(
+                {"erro": "Token e nova senha são obrigatórios.",
+                 "codigo": "DADOS_INVALIDOS"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(nova_senha) < 6:
+            return Response(
+                {"erro": "A senha deve ter no mínimo 6 caracteres.",
+                 "codigo": "SENHA_CURTA"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        import hashlib
+        token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+        token_obj = PasswordResetToken.objects.filter(
+            token_hash=token_hash
+        ).select_related("usuario").first()
+        if not token_obj or not token_obj.is_valido():
+            return Response(
+                {"erro": "Token inválido ou expirado.",
+                 "codigo": "TOKEN_INVALIDO"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        usuario = token_obj.usuario
+        usuario.set_password(nova_senha)
+        usuario.save()
+        token_obj.marcar_usado()
+        return Response({"mensagem": "Senha redefinida com sucesso."})
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """CRUD de usuários (apenas ADMIN)."""
