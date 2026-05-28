@@ -111,7 +111,13 @@ async function carregar() {
 }
 
 async function cancelar() {
-    if (!confirma(`Cancelar a venda #${vendaId}? O estoque será devolvido.`)) return;
+    if (!confirma(
+        `Tem certeza que deseja cancelar a Venda #${vendaId}?\n\n` +
+        `Esta ação irá:\n` +
+        `• Marcar a venda como CANCELADA\n` +
+        `• Devolver o estoque de todos os produtos\n\n` +
+        `Esta ação não pode ser desfeita.`
+    )) return;
     try {
         await API.vendas.cancelar(vendaId);
         toast('Venda cancelada e estoque restaurado.', 'success');
