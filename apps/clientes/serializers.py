@@ -7,6 +7,8 @@ class ClienteSerializer(serializers.ModelSerializer):
     # A unicidade é garantida pelo ClienteService, que lança
     # CPFDuplicadoError -> 409 (mais semântico que o 400 do DRF).
     cpf = serializers.CharField(max_length=14, validators=[])
+    email = serializers.EmailField(required=False, allow_null=True,
+				   allow_blank=True)
     possui_vendas = serializers.SerializerMethodField()
 
     class Meta:

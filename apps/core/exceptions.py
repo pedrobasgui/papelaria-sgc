@@ -31,6 +31,11 @@ class EmailInvalidoError(DomainException):
     default_message = "O e-mail informado não é válido."
     error_code = "EMAIL_INVALIDO"
 
+class EmailDuplicadoError(DomainException):
+    status_code = status.HTTP_409_CONFLICT
+    default_message = "Já existe um cliente com este e-mail."
+    error_code = "EMAIL_DUPLICADO"
+
 class ClientePossuiVendasError(DomainException):
     status_code = status.HTTP_409_CONFLICT
     default_message = ("Cliente possui vendas registradas e "

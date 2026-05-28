@@ -33,6 +33,13 @@ class ClienteRepository:
         return qs.exists()
 
     @staticmethod
+    def email_existe(email: str, excluir_id: Optional[int] = None) -> bool:
+        qs = Cliente.objects.filter(email=email)
+        if excluir_id:
+            qs = qs.exclude(pk=excluir_id)
+        return qs.exists()
+
+    @staticmethod
     def criar(**dados) -> Cliente:
         c = Cliente(**dados)
         c.full_clean()       # roda validações + validação de CPF

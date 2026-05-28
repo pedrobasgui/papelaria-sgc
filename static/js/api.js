@@ -155,6 +155,7 @@ const ERROS_PT = {
     CPF_DUPLICADO:        "Este CPF já está cadastrado.",
     CPF_INVALIDO:         "CPF inválido. Verifique o número digitado.",
     EMAIL_INVALIDO:       "E-mail inválido. Verifique o endereço digitado.",
+    EMAIL_DUPLICADO:	  "Este e-mail já está cadastrado para outro cliente",
     CLIENTE_COM_VENDAS:   "Este cliente possui vendas e não pode ser removido.",
     PRECO_INVALIDO:       "O preço não pode ser negativo.",
     ESTOQUE_INSUFICIENTE: "Estoque insuficiente para este produto.",
