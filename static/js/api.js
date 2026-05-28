@@ -58,8 +58,11 @@ const API = (() => {
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            const erro = data.erro || data.detail
-                          || `Erro HTTP ${res.status}`;
+            const codigoErro = data.codigo || "";
+	    const erro = ERROS_PT[codigoErro]
+		    || data.erro
+		    || data.detail
+		    || `Erro HTTP ${res.status}`;
             const e = new Error(erro);
             e.status = res.status; e.data = data;
             throw e;
@@ -147,6 +150,23 @@ const API = (() => {
 })();
 
 // ---------- Helpers globais ----------
+
+const ERROS_PT = {
+    CPF_DUPLICADO:        "Este CPF já está cadastrado.",
+    CPF_INVALIDO:         "CPF inválido. Verifique o número digitado.",
+    EMAIL_INVALIDO:       "E-mail inválido. Verifique o endereço digitado.",
+    CLIENTE_COM_VENDAS:   "Este cliente possui vendas e não pode ser removido.",
+    PRECO_INVALIDO:       "O preço não pode ser negativo.",
+    ESTOQUE_INSUFICIENTE: "Estoque insuficiente para este produto.",
+    VENDA_SEM_ITENS:      "Adicione pelo menos um item à venda.",
+    VENDA_JA_CANCELADA:   "Esta venda já foi cancelada.",
+    PERMISSAO_NEGADA:     "Você não tem permissão para esta ação.",
+    TOKEN_INVALIDO:       "Link expirado. Solicite uma nova recuperação de senha.",
+    VALIDATION_ERROR:     "Verifique os dados informados.",
+    DADOS_INVALIDOS:      "Preencha todos os campos obrigatórios.",
+    SENHA_CURTA:          "A senha deve ter no mínimo 6 caracteres.",
+};
+
 function toast(msg, type='success') {
     const cont = document.querySelector('.toast-container') ||
         (() => {
