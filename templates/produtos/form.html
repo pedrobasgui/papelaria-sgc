@@ -82,6 +82,11 @@ async function carregar() {
 
 document.getElementById('form-produto').addEventListener('submit', async e => {
     e.preventDefault();
+    const precoVal = parseFloat(document.getElementById('preco').value);
+    if (isNaN(precoVal) || precoVal < 0) {
+        toast('O preço não pode ser negativo.', 'danger');
+        return;
+    }
     const dados = {
         nome: document.getElementById('nome').value.trim(),
         descricao: document.getElementById('descricao').value.trim(),
