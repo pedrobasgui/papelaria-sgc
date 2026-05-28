@@ -90,17 +90,22 @@ document.getElementById('form-produto').addEventListener('submit', async e => {
         estoque_minimo: parseInt(document.getElementById('estoque_minimo').value),
         ativo: document.getElementById('ativo').checked,
     };
+    const btn = document.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
     try {
         if (produtoId) {
             await API.produtos.atualizar(produtoId, dados);
-            toast('Produto atualizado!', 'success');
+            toast('Produto atualizado com sucesso!', 'success');
         } else {
             await API.produtos.criar(dados);
-            toast('Produto cadastrado!', 'success');
+            toast('Produto cadastrado com sucesso!', 'success');
         }
         setTimeout(() => window.location.href = '/produtos/', 800);
     } catch (e) {
         toast(e.message, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Salvar';
     }
 });
 

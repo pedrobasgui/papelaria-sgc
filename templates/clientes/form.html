@@ -86,17 +86,22 @@ document.getElementById('form-cliente').addEventListener('submit', async e => {
         telefone: document.getElementById('telefone').value.trim() || null,
         endereco: document.getElementById('endereco').value.trim() || null,
     };
+    const btn = document.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
     try {
         if (clienteId) {
             await API.clientes.atualizar(clienteId, dados);
-            toast('Cliente atualizado!', 'success');
+            toast('Cliente atualizado com sucesso!', 'success');
         } else {
             await API.clientes.criar(dados);
-            toast('Cliente cadastrado!', 'success');
+            toast('Cliente cadastrado com sucesso!', 'success');
         }
         setTimeout(() => window.location.href = '/clientes/', 800);
     } catch (e) {
         toast(e.message, 'danger');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Salvar';
     }
 });
 
