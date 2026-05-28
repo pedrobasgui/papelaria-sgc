@@ -62,12 +62,28 @@
         </table>
     </div>
 </div>
-
+<div class="d-flex justify-content-between align-items-center mt-3"
+     id="paginacao" style="display:none!important">
+    <small class="text-muted" id="info-paginacao"></small>
+    <div>
+        <button class="btn btn-sm btn-outline-primary me-1"
+                id="btn-anterior" onclick="mudarPagina(-1)">
+            Anterior
+        </button>
+        <button class="btn btn-sm btn-outline-primary"
+                id="btn-proximo" onclick="mudarPagina(1)">
+            Próximo
+        </button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-async function carregar() {
+let paginaAtual = 1;
+const ITENS_POR_PAGINA = 10;
+async function carregar(pagina = 1) {
+    paginaAtual = pagina;
     const tbody = document.getElementById('tbody-vendas');
     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Carregando...</td></tr>';
     const filtros = {};
@@ -109,6 +125,18 @@ async function carregar() {
                 </td>
             </tr>
         `).join('');
+    const total = data.count || lista.length;
+        const totalPaginas = Math.ceil(total / ITENS_POR_PAGINA);
+        const paginacaoEl = document.getElementById('paginacao');
+        if (total > ITENS_POR_PAGINA) {
+            paginacaoEl.style.display = 'flex';
+            document.getElementById('info-paginacao').textContent =
+                `Página ${paginaAtual} de ${totalPaginas} (${total} vendas)`;
+            document.getElementById('btn-anterior').disabled = paginaAtual <= 1;
+            document.getElementById('btn-proximo').disabled = paginaAtual >= totalPaginas;
+        } else {
+            paginacaoEl.style.display = 'none';
+        }
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${e.message}</td></tr>`;
     }
@@ -127,7 +155,24 @@ async function cancelar(id) {
     } catch (e) { toast(e.message, 'danger'); }
 }
 
+function mudarPagina(direcao){
+    carregar(paginaAtual + direcao);
+}
 carregar();
 </script>
+<div class="d-flex justify-content-between align-items-center mt-3"
+     id="paginacao" style="display:none!important">
+    <small class="text-muted" id="info-paginacao"></small>
+    <div>
+        <button class="btn btn-sm btn-outline-primary me-1"
+                id="btn-anterior" onclick="mudarPagina(-1)">
+            Anterior
+        </button>
+        <button class="btn btn-sm btn-outline-primary"
+                id="btn-proximo" onclick="mudarPagina(1)">
+            Próximo
+        </button>
+    </div>
+</div>
 {% endblock %}
 
