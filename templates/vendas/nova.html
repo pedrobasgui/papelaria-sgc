@@ -117,8 +117,15 @@ async function carregarComboBoxes() {
 
 document.getElementById('produto-id').addEventListener('change', e => {
     const p = produtosCache.find(x => x.id == e.target.value);
-    document.getElementById('info-produto').textContent =
-        p ? `Preço: ${formatarBRL(p.preco)} | Estoque: ${p.estoque}` : '';
+    if (!p) {
+        document.getElementById('info-produto').innerHTML = '';
+        return;
+    }
+    const estoqueInfo = p.estoque_baixo
+        ? `<span class="estoque-baixo">⚠️ Estoque baixo: ${p.estoque} unidades</span>`
+        : `<span class="text-muted">Estoque: ${p.estoque} unidades</span>`;
+    document.getElementById('info-produto').innerHTML =
+        `Preço: ${formatarBRL(p.preco)} | ${estoqueInfo}`;
 });
 
 function adicionarItem() {
