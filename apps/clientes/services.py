@@ -33,9 +33,9 @@ class ClienteService:
     def criar(self, dados: dict):
         if self.repo.cpf_existe(dados.get("cpf")):
             raise CPFDuplicadoError(detalhes={"cpf": dados.get("cpf")})
-	email = dados.get("email")
-	if email and self.repo.email_existe(email):
-	    raise EmailDuplicadoError(detalhes={"email": email})
+        email = dados.get("email")
+        if email and self.repo.email_existe(email):
+            raise EmailDuplicadoError(detalhes={"email": email})
         try:
             return self.repo.criar(**dados)
         except DjangoValidationError as e:
@@ -48,9 +48,9 @@ class ClienteService:
         novo_cpf = dados.get("cpf")
         if novo_cpf and self.repo.cpf_existe(novo_cpf, excluir_id=cliente_id):
             raise CPFDuplicadoError(detalhes={"cpf": novo_cpf})
-	email = dados.get("email")
-	if email and self.repo.email_existe(email, excluir_id=cliente_id):
-	    raise EmailDuplicadoError(detalhes={"email": email})
+        email = dados.get("email")
+        if email and self.repo.email_existe(email, excluir_id=cliente_id):
+            raise EmailDuplicadoError(detalhes={"email": email})
         try:
             return self.repo.atualizar(cliente, **dados)
         except DjangoValidationError as e:
