@@ -89,3 +89,24 @@ class TestClienteAPI:
     def test_acesso_sem_autenticacao(self, api_client):
         r = api_client.get("/api/clientes/")
         assert r.status_code == 401
+
+    def test_email_duplicado_lanca_excecao(self, cliente):
+            from apps.core.exceptions import EmailDuplicadoError
+            s = ClienteService()
+            with pytest.raises(EmailDuplicadoError):
+                s.criar({
+                    "nome": "Outro",
+                    "cpf": "111.444.777-35",
+                    "email": cliente.email,
+                })
+
+    def test_atualizar_email_duplicado(self, cliente):
+        from apps.core.exceptions import EmailDuplicadoError
+        from apps.clientes.models import Cliente
+        outro = Cliente.objects.create(
+            nome="Outro", cpf="111.444.777-35",
+            email="outro@email.com",
+        )
+        s = ClienteService()
+        with pytest.raises(EmailDuplicadoError):
+            s.atualizar(outro.id, {"email": cliente.email})

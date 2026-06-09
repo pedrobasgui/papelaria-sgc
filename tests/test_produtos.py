@@ -75,3 +75,24 @@ class TestProdutoAPI:
         assert r.status_code == 200
         ids = [p["id"] for p in r.json()]
         assert produto_baixo.id in ids
+
+    def test_preco_zero_e_aceito(self):
+            s = ProdutoService()
+            p = s.criar({
+                "nome": "Brinde",
+                "preco": 0,
+                "estoque": 10,
+                "estoque_minimo": 2,
+            })
+            assert p.id is not None
+
+    def test_inativar_produto_com_vendas(self, admin_user, cliente, produto):
+        from apps.vendas.services import VendaService
+        VendaService().criar_venda(
+            cliente_id=cliente.id, usuario=admin_user,
+            itens=[{"produto_id": produto.id, "quantidade": 1}]
+        )
+        s = ProdutoService()
+        s.remover(produto.id)
+        produto.refresh_from_db()
+        assert produto.ativo is False
