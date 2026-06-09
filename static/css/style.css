@@ -216,3 +216,54 @@ body {
     z-index: 2000;
 }
 .spinner-overlay.show { display: flex; }
+
+/* ---------- Responsividade Mobile ----------  */
+@media (max-width: 768px) {
+    .navbar-papelaria .navbar-brand {
+        font-size: 1rem;
+    }
+
+    .kpi-card .value {
+        font-size: 1.5rem;
+    }
+
+    .kpi-card {
+        padding: 1rem;
+    }
+
+    .login-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .card-header {
+        font-size: 0.95rem;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-card .value {
+        font-size: 1.2rem;
+    }
+
+    .login-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .footer {
+        font-size: 0.75rem;
+    }
+}
