@@ -43,3 +43,5 @@ urlpatterns = [
     # Interface web (consome a API)
     path("", include("apps.web.urls")),
 ]
+
+handler404 = "apps.web.views.handler404"

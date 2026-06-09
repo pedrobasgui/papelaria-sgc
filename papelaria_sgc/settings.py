@@ -15,6 +15,7 @@ SECRET_KEY = config(
     default="django-insecure-CHANGE-ME-em-producao-use-uma-chave-forte"
 )
 DEBUG = config("DEBUG", default=True, cast=bool)
+HANDLER404 = "apps.web.views.handler404"
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=Csv())
 
 # Aplicações

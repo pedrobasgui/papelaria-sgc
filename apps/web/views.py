@@ -49,3 +49,6 @@ def recuperar_senha_view(request):
 
 def redefinir_senha_view(request):
     return render(request, "registration/redefinir_senha.html")
+
+def handler404(request, exception=None):
+    return render(request, "errors/404.html", status=404)
