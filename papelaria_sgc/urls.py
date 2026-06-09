@@ -20,6 +20,10 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+admin.site.site_header = "Papelaria Mundo Letrado"
+admin.site.site_title = "SGC Admin"
+admin.site.index_title = "Painel Administrativo"
+
 urlpatterns = [
     # Django admin
     path("admin/", admin.site.urls),
