@@ -45,3 +45,4 @@ urlpatterns = [
 ]
 
 handler404 = "apps.web.views.handler404"
+handler500 = "apps.web.views.handler500"
